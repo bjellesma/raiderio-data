@@ -4,7 +4,7 @@ import sys
 import logging
 
 # Set up logging
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 ssm_client = boto3.client('ssm')
 client = boto3.client('athena')
@@ -26,8 +26,9 @@ def get_ssm_parameter(param_name):
 
 DATABASE = get_ssm_parameter('raiderio_database')
 TEMP_TABLE = get_ssm_parameter('temp_table')
+PARTITION_COLUMN = get_ssm_parameter('raiderio_partition_column')
+PROD_TABLE = get_ssm_parameter('raiderio_prod_table')
 TEMP_BUCKET = get_ssm_parameter('temp_bucket')
-FIREHOSE_TABLE = get_ssm_parameter('raiderio_firehose_table')
 QUERY_OUTPUT_BUCKET = get_ssm_parameter('raiderio_query_results_bucket')
 PROD_BUCKET=get_ssm_parameter('raiderio_prod_bucket')
 
@@ -35,11 +36,11 @@ current_date = str(str(datetime.utcnow()).replace('-', '_').replace(' ', '_').re
 
 # Refresh the table
 query_string = f"""
-    CREATE TABLE {FIREHOSE_TABLE}_PROD_{current_date} WITH
+    CREATE TABLE {PROD_TABLE} WITH
     (external_location='s3://{PROD_BUCKET}/{current_date}/',
     format='PARQUET',
     write_compression='SNAPPY',
-    partitioned_by = ARRAY['expansion'])
+    partitioned_by = ARRAY['{PARTITION_COLUMN}'])
     AS
 
     SELECT

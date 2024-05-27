@@ -2,13 +2,25 @@ import boto3
 import sys
 import logging
 
-# Set up logging
-logging.basicConfig(level=logging.ERROR)
+# Set up logging and aws resources
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 ssm_client = boto3.client('ssm')
 client = boto3.client('athena')
 
 def get_ssm_parameter(param_name):
+    """
+    Retrieve a parameter from AWS Systems Manager Parameter Store.
+
+    Parameters:
+    param_name (str): The name of the parameter to retrieve.
+
+    Returns:
+    str: The value of the parameter.
+
+    Raises:
+    SystemExit: If the parameter cannot be retrieved due to it not existing or other AWS errors.
+    """
     try:
         # Attempt to retrieve the parameter
         response = ssm_client.get_parameter(Name=param_name, WithDecryption=True)
@@ -25,6 +37,7 @@ def get_ssm_parameter(param_name):
 # Retrieve parameters safely
 DATABASE = get_ssm_parameter('raiderio_database')
 TEMP_TABLE = get_ssm_parameter('temp_table')
+PARTITION_COLUMN = get_ssm_parameter('raiderio_partition_column')
 TEMP_BUCKET = get_ssm_parameter('temp_bucket')
 FIREHOSE_TABLE = get_ssm_parameter('raiderio_firehose_table')
 QUERY_OUTPUT_BUCKET = get_ssm_parameter('raiderio_query_results_bucket')
@@ -35,7 +48,7 @@ query_string = f"""
     (external_location='s3://{TEMP_BUCKET}/',
     format='PARQUET',
     write_compression='SNAPPY',
-    partitioned_by = ARRAY['expansion'])
+    partitioned_by = ARRAY['{PARTITION_COLUMN}'])
     AS
 
     SELECT
