@@ -39,7 +39,7 @@ def get_ssm_parameter(param_name):
 
 # Retrieve parameters safely
 DATABASE = get_ssm_parameter('raiderio_database')
-TEMP_TABLE = get_ssm_parameter('temp_table')
+TEMP_TABLE = get_ssm_parameter('raiderio_temp_table')
 DATA_QUALITY_BUCKET = get_ssm_parameter('raiderio_data_quality_bucket')
 
 current_date = datetime.date.today()

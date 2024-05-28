@@ -14,28 +14,6 @@ EXPANSIONS = [
         'seasons': [
             {
                 'expansion_season': 1,
-                'full_season': 9
-            },
-            {
-                'expansion_season': 2,
-                'full_season': 10
-            },
-            {
-                'expansion_season': 3,
-                'full_season': 11
-            },
-            {
-                'expansion_season': 4,
-                'full_season': 12
-            }
-        ]
-    },
-    {
-        'title' : 'Shadowlands',
-        'slug' : 'sl',
-        'seasons': [
-            {
-                'expansion_season': 1,
                 'full_season': 5
             },
             {
@@ -53,8 +31,8 @@ EXPANSIONS = [
         ]
     },
     {
-        'title' : 'Battle for Azeroth',
-        'slug' : 'bfa',
+        'title' : 'Shadowlands',
+        'slug' : 'sl',
         'seasons': [
             {
                 'expansion_season': 1,

@@ -1,13 +1,100 @@
 # Raiderio Data
 
-Raiderio Data is designed to ingest the [raiderio api](https://raider.io/api) in order to analyze the mythic plus scores over the years for [World of Warcraft](https://worldofwarcraft.blizzard.com/) for the top percentages of players. The data is ingested from an AWS lambda function and transformed into an ETL (extract, transform, and load) process through AWS glue workflow that is then able to be visualized through [Grafana](https://grafana.com/).
+## Overview
+**Raiderio Data** is a project designed to harness the power of serverless technology to ingest and analyze mythic plus scores from top World of Warcraft mythic plus players over the years. This solution leverages the [Raider.io API](https://raider.io/api) to extract data, which is then processed using AWS services to provide insights into player rankings across various percentiles.
 
-This project was built as part of [David Freitag's Build Your First Serverless Data Engineering Project](https://maven.com/david-freitag/first-serverless-de-project)
+This project was constructed following the principles outlined in [David Freitag's Build Your First Serverless Data Engineering Project](https://maven.com/david-freitag/first-serverless-de-project), focusing on practical, hands-on application of data engineering techniques in a serverless environment.
 
-# Questions to Answer
+## Features
+- **Data Ingestion**: Automatically pull data from the Raider.io API using AWS Lambda functions.
+- **ETL Process**: Transform the ingested data through a robust AWS Glue workflow.
+- **Data Visualization**: Analyze and visualize the processed data using [Grafana](https://grafana.com/) to track and compare player scores across different times and seasons.
 
-What has been and what is the mythic plus score need to be in top 40% of players? Top 25%? Top 10%? Top 1%? Top 0.1%? This is according to when World of Warcraft's mythic plus scores were first tracked in raider.io
+## Questions Addressed
+- What score is required to be in the top 40%, 25%, 10%, 1%, and 0.1% of players for the current season?
+- How have the requirements for these percentiles changed since raiderio's tracking of mythic plus scores began?
 
-# Architecture
-
+## Architecture
+1. We use Aws Lambda to call the raiderio api and dump the data to a firehose
+2. Firehose will dump the data received to an S3 Bucket after a certain amount of time
+3. An AWS Glue Data Workflow will kick off the following crawlers and jobs 
+    * A crawler will use the data from the S3 bucket to create a table in AWS Athena
+    * A job `Delete Raiderio Table` will delete any raiderio temporary and production tables as well as empty the S3 bucket that the crawler used
+    * A job `Create Raiderio Table` will recreate the raiderio temporary table with the table data created from crawler
+    * A job `Data Quality Raiderio Table` will perform an out of range check on the temporary table to ensure the integrity of the data
+    * A job `Publish Raiderio Table` will capture the transformed data from the temporary table and push it to a production ready table that can be used with Grafana
+* Grafana will be used to visualize the data created from the production table. See the snapshots below.
 ![Architecture](images/architecture.png)
+
+## Data Visualization
+
+Here is a [snapshot](https://bjellesma.grafana.net/dashboard/snapshot/aoe0YpBmrCmVUFaQ6as03Wz4i6cEewC3?orgId=0) of the data on Grafana as of May 27, 2024
+
+![Grafana Season Cutoff Snapshot 1](images/grafana-season-cutoff-1.png)
+![Grafana Season Cutoff Snapshot 1](images/grafana-season-cutoff-2.png)
+
+## Getting Started
+To get started with this project, you'll need to set up several AWS services. Here's a brief rundown of the steps:
+
+### Prerequisites
+- AWS account
+- Basic knowledge of AWS Lambda, AWS Glue, and Grafana
+
+### Setup
+1. **Clone the repository**:  
+   `git clone https://github.com/bjellesma/raiderio-data.git`
+2. **Configure AWS Services**:
+    - Create the following AWS S3 Buckets. These buckets must be globally unique and the names generated must be mapped to the below parameter store
+        - Data Quality bucket
+            - This will map to `raiderio_data_quality_bucket`
+            - This will hold all information on the data quality checks
+        - Production Data bucket
+            - This will map to `raiderio_prod_bucket`
+            - This will hold all of the data for out production Athena table
+        - Temporary Data bucket
+            - This will map to `raiderio_temp_bucket`
+            - This will hold all of the data for out temporary (pre-transformed) Athena table
+        - Query Results bucket
+            - This will map to `raiderio_query_results_bucket`
+            - This will be used during glue jobs to hold all query results
+        - Firehose bucket
+            - This does not map to any of the below parameters
+            - This will be used as the destination bucket for the AWS Kinesis Firehose
+    - AWS Kinesis Firehose
+        - The firehose name that is automatically generated by AWS will be used in the below parameters in `raiderio_firehose_name`
+        ![Firehose Name](images/firehose-name.png)
+        - The destination setting S3 bucket will be the Firehose bucket that you created above. We will use this in the crawler that we create below.
+        ![Destination Settings](images/firehose-destination-settings.png)
+    - Create an AWS glue crawler that will use the bucket that the firehose has dumped into to create a database table using AWS Athena
+    ![Crawler](images/crawler.png)
+    - Create the following parameters in AWS Systems Manager Parameter Store
+        - `raiderio_database`: This will be the name of the database that you created in AWS Athena
+        - `raiderio_data_quality_bucket` The AWS S3 bucket that the data quality glue job will create files in
+        - `raiderio_firehose_name`: The AWS Kinesis Firehose that the lambda function will use to hold files
+        - `raiderio_firehose_table`: The AWS athena table that you've set as the destination for your kinesis firehose
+        - `raiderio_partition_column`: The column of the AWS temporary and production tables to be the partition
+        - `raiderio_prod_bucket`: The S3 bucket to store data in parquet format for the production table in AWS Athena
+        - `raiderio_prod_table`: The name of the production table that you want the glue job `Publish Raiderio Table` to create
+        - `raiderio_temp_bucket`: The S3 bucket to store data in parquet format for the temporary table in AWS Athena
+        - `raiderio_temp_table`: The name of the temporary table that you want the glue job `Create Raiderio Table` to create
+        - `raiderio_query_results_bucket`: The S3 bucket to store the query results being performed by the glue jobs
+   - Set up AWS Lambda to ingest data from Raider.io using the files in the [lambda-api-call](https://github.com/bjellesma/raiderio-data/tree/main/lambda-api-call) directory.
+    - This firehose will dump all files collected by the lambda function to the `raiderio_firehose_bucket`
+   - Configure AWS Glue for the ETL process.
+    - Create a glue job called `Create Raiderio Table` using [create_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/create_raiderio_table.py)
+    - Create a glue job called `Delete Raiderio Table` using [delete_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/delete_raiderio_table.py)
+    - Create a glue job called `Data Quality Raiderio Table` using [data_quality_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/data_quality_raiderio_table.py)
+    - Create a glue job called `Publish Raiderio Table` using [create_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/publish_raiderio_table.py)
+3. Set up Grafana for visualization. Create a dashboard with the following panels
+    - Top 40% Panel will be a bar chart using the [Top 40 Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top40.sql)
+    - Top 25% Panel will be a bar chart using the [Top 25% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top25.sql)
+    - Top 10% Panel will be a bar chart using the [Top 10% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top10.sql)
+    - Top 1% Panel will be a bar chart using the [Top 1% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top1.sql)
+    - Top 0.1% Panel will be a bar chart using the [Top 0.1% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/toppoint1.sql)
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+## Acknowledgments
+- Special thanks to [David Freitag](https://github.com/dkfreitag) for his invaluable guidance through his course.
+- Raider.io for providing an accessible API to work with World of Warcraft data.

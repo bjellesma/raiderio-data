@@ -86,10 +86,9 @@ def empty_s3_bucket(bucket):
 if __name__ == "__main__":
     # Retrieve parameters safely
     DATABASE = get_ssm_parameter('raiderio_database')
-    TEMP_TABLE = get_ssm_parameter('temp_table')
+    TEMP_TABLE = get_ssm_parameter('raiderio_temp_table')
     PROD_TABLE = get_ssm_parameter('raiderio_prod_table')
-    FIREHOSE_BUCKET = get_ssm_parameter('raiderio_firehose_bucket')
-    FIREHOSE_TABLE = get_ssm_parameter('raiderio_firehose_table')
+    TEMP_BUCKET = get_ssm_parameter('raiderio_temp_bucket')
     QUERY_OUTPUT_BUCKET = get_ssm_parameter('raiderio_query_results_bucket')
 
     temp_table_query = {
@@ -105,5 +104,5 @@ if __name__ == "__main__":
     for query in [temp_table_query, prod_table_query]:
         execute_query(query, DATABASE, QUERY_OUTPUT_BUCKET)
 
-    # Empty the specified S3 bucket
-    empty_s3_bucket(FIREHOSE_BUCKET)
+    # Empty the bucket with the temp files, we'll leave the prod bucket)
+    empty_s3_bucket(TEMP_BUCKET)

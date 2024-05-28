@@ -25,10 +25,10 @@ def get_ssm_parameter(param_name):
 
 
 DATABASE = get_ssm_parameter('raiderio_database')
-TEMP_TABLE = get_ssm_parameter('temp_table')
+TEMP_TABLE = get_ssm_parameter('raiderio_temp_table')
 PARTITION_COLUMN = get_ssm_parameter('raiderio_partition_column')
 PROD_TABLE = get_ssm_parameter('raiderio_prod_table')
-TEMP_BUCKET = get_ssm_parameter('temp_bucket')
+TEMP_BUCKET = get_ssm_parameter('raiderio_temp_bucket')
 QUERY_OUTPUT_BUCKET = get_ssm_parameter('raiderio_query_results_bucket')
 PROD_BUCKET=get_ssm_parameter('raiderio_prod_bucket')
 

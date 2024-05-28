@@ -36,9 +36,9 @@ def get_ssm_parameter(param_name):
 
 # Retrieve parameters safely
 DATABASE = get_ssm_parameter('raiderio_database')
-TEMP_TABLE = get_ssm_parameter('temp_table')
+TEMP_TABLE = get_ssm_parameter('raiderio_temp_table')
 PARTITION_COLUMN = get_ssm_parameter('raiderio_partition_column')
-TEMP_BUCKET = get_ssm_parameter('temp_bucket')
+TEMP_BUCKET = get_ssm_parameter('raiderio_temp_bucket')
 FIREHOSE_TABLE = get_ssm_parameter('raiderio_firehose_table')
 QUERY_OUTPUT_BUCKET = get_ssm_parameter('raiderio_query_results_bucket')
 
