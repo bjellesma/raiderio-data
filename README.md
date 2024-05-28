@@ -1,7 +1,8 @@
 # Raiderio Data
 
 ## Overview
-**Raiderio Data** is a project designed to harness the power of serverless technology to ingest and analyze mythic plus scores from top World of Warcraft mythic plus players over the years. This solution leverages the [Raider.io API](https://raider.io/api) to extract data, which is then processed using AWS services to provide insights into player rankings across various percentiles.
+
+**Raiderio Data** leverages serverless technology to systematically ingest and analyze World of Warcraft mythic plus scores from top players over the years. Utilizing the [Raider.io API](https://raider.io/api) and AWS services, this project delivers key insights into player rankings across various percentiles.
 
 This project was constructed following the principles outlined in [David Freitag's Build Your First Serverless Data Engineering Project](https://maven.com/david-freitag/first-serverless-de-project), focusing on practical, hands-on application of data engineering techniques in a serverless environment.
 
@@ -15,7 +16,7 @@ This project was constructed following the principles outlined in [David Freitag
 - How have the requirements for these percentiles changed since raiderio's tracking of mythic plus scores began?
 
 ## Architecture
-1. We use Aws Lambda to call the raiderio api and dump the data to a firehose
+1. We use AWS Lambda to call the raiderio api and dump the data to a firehose
 2. Firehose will dump the data received to an S3 Bucket after a certain amount of time
 3. An AWS Glue Data Workflow will kick off the following crawlers and jobs 
     * A crawler will use the data from the S3 bucket to create a table in AWS Athena
@@ -23,7 +24,7 @@ This project was constructed following the principles outlined in [David Freitag
     * A job `Create Raiderio Table` will recreate the raiderio temporary table with the table data created from crawler
     * A job `Data Quality Raiderio Table` will perform an out of range check on the temporary table to ensure the integrity of the data
     * A job `Publish Raiderio Table` will capture the transformed data from the temporary table and push it to a production ready table that can be used with Grafana
-* Grafana will be used to visualize the data created from the production table. See the snapshots below.
+4. Grafana will be used to visualize the data created from the production table. See the snapshots below.
 ![Architecture](images/architecture.png)
 
 ## Data Visualization
@@ -31,29 +32,30 @@ This project was constructed following the principles outlined in [David Freitag
 Here is a [snapshot](https://bjellesma.grafana.net/dashboard/snapshot/aoe0YpBmrCmVUFaQ6as03Wz4i6cEewC3?orgId=0) of the data on Grafana as of May 27, 2024
 
 ![Grafana Season Cutoff Snapshot 1](images/grafana-season-cutoff-1.png)
-![Grafana Season Cutoff Snapshot 1](images/grafana-season-cutoff-2.png)
+![Grafana Season Cutoff Snapshot 2](images/grafana-season-cutoff-2.png)
+
+## Findings
+
+Dragonflight Season 3 has the highest cutoff points both for its own expansion and for the overall available data for the top 10%, top 1%, and top 0.1% of the playerbase. However, Dragonflight Season 3 is overtaken by Dragonflight Season 1 for the top 40% and top 25%. A possible reason for this is the PUGs (pick up groups) tend to be more common at the 40% and 25% marks and usually have less coordination implying that the Dragonflight season 1 dungeon pool may have required less coordination allowing the player base to achieve higher scores. Additionally, players in the top 10%, 1%, and 0.1% tend to be in organized groups (often in voice chats) where coordination is much higher. This increased group coordination often leads to success in higher level dungeons.
+
+Notably, Dragonflight Season 2 also has very low score cutoffs until the top 1% of the playerbase. This could be due to an increase population count as season 2 launched (season 1 was very successful for Blizzard which could have attracted more players) and this increased population could be players that aren't looking to maximize their scores. This influx to the population could have led to a decreased score needed to place in the top percentiles.
 
 ## Getting Started
 To get started with this project, you'll need to set up several AWS services. Here's a brief rundown of the steps:
 
-### Prerequisites
-- AWS account
-- Basic knowledge of AWS Lambda, AWS Glue, and Grafana
-
-### Setup
 1. **Clone the repository**:  
    `git clone https://github.com/bjellesma/raiderio-data.git`
 2. **Configure AWS Services**:
-    - Create the following AWS S3 Buckets. These buckets must be globally unique and the names generated must be mapped to the below parameter store
+    - Create the following AWS S3 Buckets. Ensure these buckets are globally unique. The names generated must be mapped to the parameters listed in the AWS Systems Manager Parameter Store below.
         - Data Quality bucket
             - This will map to `raiderio_data_quality_bucket`
             - This will hold all information on the data quality checks
         - Production Data bucket
             - This will map to `raiderio_prod_bucket`
-            - This will hold all of the data for out production Athena table
+            - This will hold all of the data for our production Athena table
         - Temporary Data bucket
             - This will map to `raiderio_temp_bucket`
-            - This will hold all of the data for out temporary (pre-transformed) Athena table
+            - This will hold all of the data for our temporary (pre-transformed) Athena table
         - Query Results bucket
             - This will map to `raiderio_query_results_bucket`
             - This will be used during glue jobs to hold all query results
@@ -86,7 +88,7 @@ To get started with this project, you'll need to set up several AWS services. He
     - Create a glue job called `Data Quality Raiderio Table` using [data_quality_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/data_quality_raiderio_table.py)
     - Create a glue job called `Publish Raiderio Table` using [create_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/publish_raiderio_table.py)
 3. Set up Grafana for visualization. Create a dashboard with the following panels
-    - Top 40% Panel will be a bar chart using the [Top 40 Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top40.sql)
+    - Top 40% Panel will be a bar chart using the [Top 40% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top40.sql)
     - Top 25% Panel will be a bar chart using the [Top 25% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top25.sql)
     - Top 10% Panel will be a bar chart using the [Top 10% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top10.sql)
     - Top 1% Panel will be a bar chart using the [Top 1% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top1.sql)
