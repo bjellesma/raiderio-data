@@ -55,10 +55,16 @@ query_string = f"""
         season
         ,full_season
         ,p999
+        ,p999_population
         ,p990
+        ,p990_population
         ,p900
+        ,p900_population
         ,p750
+        ,p750_population
         ,p600
+        ,p600_population
+        ,population
         ,expansion
     FROM "{DATABASE}"."{FIREHOSE_TABLE}"
 

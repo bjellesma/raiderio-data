@@ -78,11 +78,17 @@ def lambda_handler(event,context):
             if response.status_code != 200:
                 for percentile in PERCENTILES:
                     cutoff_row[percentile] = 0
+                    cutoff_row[f'{percentile}_population'] = 0
+                    cutoff_row['population'] = 0
             else:
                 data = response.json()
                 cutoff = data.get('cutoffs')
                 for percentile in PERCENTILES:
                     cutoff_row[percentile] = cutoff[percentile][FACTION]["quantileMinValue"]
+                    cutoff_row[f'{percentile}_population'] = cutoff[percentile][FACTION]["quantilePopulationCount"]
+                    # because the total population is always the same, we don't need to get that for every percentil
+                    if not 'population' in cutoff_row:
+                        cutoff_row['population'] = cutoff[percentile][FACTION]["totalPopulationCount"]
             cutoff_table += str(cutoff_row) + '\n'
 
     # put the record onto the firehose

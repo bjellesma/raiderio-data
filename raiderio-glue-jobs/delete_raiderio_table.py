@@ -104,5 +104,6 @@ if __name__ == "__main__":
     for query in [temp_table_query, prod_table_query]:
         execute_query(query, DATABASE, QUERY_OUTPUT_BUCKET)
 
-    # Empty the bucket with the temp files, we'll leave the prod bucket)
+    # Empty the bucket with the temp files and the query results bucket, we'll leave the prod bucket)
     empty_s3_bucket(TEMP_BUCKET)
+    empty_s3_bucket(QUERY_OUTPUT_BUCKET)
