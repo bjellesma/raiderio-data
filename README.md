@@ -88,6 +88,7 @@ To get started with this project, you'll need to set up several AWS services. He
     - Create a glue job called `Data Quality Raiderio Table` using [data_quality_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/data_quality_raiderio_table.py)
     - Create a glue job called `Publish Raiderio Table` using [create_raiderio_table.py](https://github.com/bjellesma/raiderio-data/blob/main/raiderio-glue-jobs/publish_raiderio_table.py)
 3. Set up Grafana for visualization. Create a dashboard with the following panels
+    - All scales are bar charts with a logarithmic x axis in order to see the numbers better
     - Top 40% Panel will be a bar chart using the [Top 40% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top40.sql)
     - Top 25% Panel will be a bar chart using the [Top 25% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top25.sql)
     - Top 10% Panel will be a bar chart using the [Top 10% Query](https://github.com/bjellesma/raiderio-data/blob/main/grafana-queries/top10.sql)
